@@ -1,5 +1,5 @@
 /* Service worker — offline cache for the Russian cursive PWA */
-const CACHE = 'russkij-kursiv-v1';
+const CACHE = 'russkij-kursiv-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -29,15 +29,29 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
-  e.respondWith(
-    caches.match(req).then((hit) => {
-      if (hit) return hit;
-      return fetch(req).then((res) => {
-        // runtime-cache anything we successfully fetch (e.g. Google Fonts)
+
+  const isHTML = req.mode === 'navigate' ||
+    (req.headers.get('accept') || '').includes('text/html');
+
+  if (isHTML) {
+    // Network-first for pages, so a new deploy shows up immediately;
+    // fall back to cache when offline.
+    e.respondWith(
+      fetch(req).then((res) => {
         const copy = res.clone();
         caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
         return res;
-      }).catch(() => caches.match('./cursive.html'));
-    })
+      }).catch(() => caches.match(req).then((h) => h || caches.match('./cursive.html')))
+    );
+    return;
+  }
+
+  // Everything else (fonts, icons, CSS): cache-first + runtime cache.
+  e.respondWith(
+    caches.match(req).then((hit) => hit || fetch(req).then((res) => {
+      const copy = res.clone();
+      caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+      return res;
+    }).catch(() => undefined))
   );
 });
