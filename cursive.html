@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Русский курсив — Russian Cursive</title>
 
 <!-- PWA: installable / offline -->
@@ -21,7 +21,8 @@
 
 <style>
   /* Authentic Russian school cursive (ParaType Propisi, 1997).
-     Local file first, jsDelivr CDN fallback when hosted. */
+     Loads the local file first, falls back to jsDelivr CDN if opened where
+     the local file can't be read. */
   @font-face {
     font-family: 'Propisi';
     src: url('Propisi.ttf') format('truetype'),
@@ -32,254 +33,242 @@
   :root {
     --bg: #f4f1ea;
     --paper: #fffdf8;
-    --ink: #1a3a6b;
+    --ink: #1a3a6b;        /* blue ink like a Russian notebook */
     --line: #c9d6e8;
+    --accent: #b5651d;
     --ui: #2b2b2b;
-    --kbbg: #d9d3c4;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body {
-    height: 100%;
+  body {
     margin: 0;
-    overflow: hidden;
-    overscroll-behavior: none;
-    background: #e8e3d8;
     font-family: -apple-system, "SF Pro Text", "Helvetica Neue", "Apple SD Gothic Neo", sans-serif;
-    color: var(--ui);
-  }
-
-  /* ---- App shell: fills the viewport, never scrolls as a whole ---- */
-  .app {
-    height: 100dvh;
-    max-width: 720px;
-    margin: 0 auto;
     background: var(--bg);
+    color: var(--ui);
     display: flex;
     flex-direction: column;
-    box-shadow: 0 0 40px rgba(0,0,0,.06);
+    align-items: center;
+    padding: 28px 16px 60px;
   }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  .sub { margin: 0 0 22px; color: #777; font-size: 13px; }
 
-  /* Top bar */
-  .bar {
-    flex: none;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: max(8px, env(safe-area-inset-top)) 14px 8px;
-    background: var(--ink);
-    color: #fff;
-  }
-  .bar h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .2px; }
-  .bar .gear {
-    background: rgba(255,255,255,.15); border: none; color: #fff;
-    width: 34px; height: 34px; border-radius: 9px; font-size: 17px; cursor: pointer;
-  }
-
-  /* Input + output area (the flexible middle) */
-  .io {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex; flex-direction: column;
-    gap: 8px;
-    padding: 10px 12px;
-  }
-  #input {
-    flex: none;
+  .panel {
     width: 100%;
-    height: 58px;
-    padding: 10px 12px;
-    font-size: 17px;            /* >=16px so iOS doesn't zoom on focus */
-    line-height: 1.4;
+    max-width: 760px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 90px;
+    padding: 14px 16px;
+    font-size: 18px;
+    line-height: 1.5;
     border: 1px solid #d8d2c4;
-    border-radius: 11px;
+    border-radius: 12px;
+    resize: vertical;
     background: #fff;
     color: #222;
-    resize: none;
     outline: none;
   }
-  #input:focus { border-color: var(--ink); }
+  textarea:focus { border-color: var(--ink); }
 
+  /* The cursive output sheet — looks like ruled notebook paper */
   .sheet {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    position: relative;
+    margin-top: 16px;
     background: var(--paper);
     border-radius: 12px;
-    padding: 16px 16px;
-    box-shadow: 0 4px 14px rgba(0,0,0,.07);
+    padding: 36px 34px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    min-height: 160px;
     background-image: repeating-linear-gradient(
-      to bottom, transparent 0, transparent calc(1.7em - 1px),
-      var(--line) calc(1.7em - 1px), var(--line) 1.7em);
+      to bottom,
+      transparent 0,
+      transparent calc(1.7em - 1px),
+      var(--line) calc(1.7em - 1px),
+      var(--line) 1.7em
+    );
     background-size: 100% 1.7em;
+    overflow-wrap: break-word;
   }
   .output {
     font-family: 'Propisi', cursive;
     color: var(--ink);
-    font-size: 40px;
+    font-size: 44px;
     line-height: 1.7em;
     white-space: pre-wrap;
     word-break: break-word;
     margin: 0;
   }
-  .output:empty::before { content: "Здесь появится курсив…"; color: #c3bca8; }
+  .output:empty::before {
+    content: "Здесь появится курсив…";
+    color: #b9b2a0;
+  }
 
-  /* On-screen Cyrillic keyboard (always visible) */
+  /* On-screen Cyrillic keyboard */
+  .kb-toggle { margin: 22px 0 0; }
   .keyboard {
-    flex: none;
-    background: var(--kbbg);
-    padding: 6px 5px;
+    margin-top: 12px;
+    background: #e7e1d4;
+    padding: 12px 10px;
+    border-radius: 14px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,.08);
     user-select: none;
   }
-  .kb-row { display: flex; gap: 5px; margin-bottom: 5px; }
+  .kb-row { display: flex; gap: 6px; margin-bottom: 6px; }
   .kb-row:last-child { margin-bottom: 0; }
   .key {
-    flex: 1 1 0; min-width: 0;
-    height: 46px;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 44px;
+    padding: 0 4px;
     display: flex; align-items: center; justify-content: center;
     background: #fff;
-    border: 1px solid #c4bdac;
+    border: 1px solid #cfc8b8;
     border-bottom-width: 2px;
-    border-radius: 7px;
+    border-radius: 8px;
     font-size: 18px;
-    color: #222;
+    color: #2b2b2b;
     cursor: pointer;
+    transition: background .05s, transform .05s;
   }
-  .key:active { background: #cfc7b4; transform: translateY(1px); }
-  .key.fn { font-size: 13px; color: #555; background: #efe9dc; flex: 1.5 1 0; }
+  .key:hover { background: #f3efe6; }
+  .key:active { transform: translateY(1px); background: #e6dfce; }
+  .key.wide { flex: 1.5 1 0; font-size: 13px; color: #555; }
   .key.space { flex: 4 1 0; font-size: 13px; color: #777; }
   .key.shift.on { background: var(--ink); color: #fff; border-color: var(--ink); }
 
-  /* Bottom action bar */
-  .actions {
-    flex: none;
-    display: flex; gap: 8px;
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-    background: var(--kbbg);
+  /* Settings / controls */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 22px;
+    align-items: center;
+    margin: 22px 2px 0;
+    font-size: 13px;
   }
-  .actions button {
-    flex: 1;
-    height: 46px;
-    border: none; border-radius: 11px;
-    font-size: 14px; font-weight: 600;
+  .controls label { display: flex; flex-direction: column; gap: 5px; color: #555; }
+  .controls label.switch { flex-direction: row; align-items: center; gap: 8px; }
+  select, input[type=range] { accent-color: var(--ink); }
+  select {
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: #fff;
+    font-size: 13px;
+  }
+  .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  button {
+    padding: 7px 14px;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 13px;
     cursor: pointer;
   }
-  .btn-primary { background: var(--ink); color: #fff; }
-  .btn-soft { background: #fff; color: var(--ink); border: 1px solid #c4bdac !important; }
+  button.ghost { background: #fff; color: var(--ink); }
 
-  /* Settings bottom sheet */
-  .backdrop {
-    position: fixed; inset: 0; background: rgba(0,0,0,.4);
-    opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 30;
-  }
-  .backdrop.show { opacity: 1; pointer-events: auto; }
-  .settings {
-    position: fixed; left: 0; right: 0; bottom: 0;
-    max-width: 720px; margin: 0 auto;
-    background: var(--paper);
-    border-radius: 18px 18px 0 0;
-    padding: 8px 18px calc(20px + env(safe-area-inset-bottom));
-    max-height: 80dvh; overflow-y: auto;
-    transform: translateY(110%); transition: transform .25s ease;
-    z-index: 31;
-    box-shadow: 0 -10px 30px rgba(0,0,0,.18);
-  }
-  .settings.open { transform: translateY(0); }
-  .grab { width: 44px; height: 5px; border-radius: 3px; background: #ccc4b2; margin: 4px auto 12px; }
-  .settings h2 { font-size: 14px; margin: 0 0 14px; color: #555; }
-  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; font-size: 13px; color: #555; }
-  .field select, .field input[type=range] { accent-color: var(--ink); }
-  .field select {
-    padding: 9px 10px; border-radius: 9px; border: 1px solid #ccc; background: #fff; font-size: 14px;
-  }
-  .switch { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
-  .switch input { width: 20px; height: 20px; accent-color: var(--ink); }
-  .set-row { display: flex; gap: 8px; }
-  .set-row button {
-    flex: 1; height: 42px; border-radius: 9px; border: 1px solid var(--ink);
-    background: #fff; color: var(--ink); font-size: 13px; cursor: pointer;
-  }
+  /* Warning banner when no Russian voice is installed */
   .warn {
-    margin: 0 0 14px; padding: 11px 12px; background: #fff3e0;
-    border: 1px solid #f0c887; border-radius: 10px; font-size: 12.5px;
-    line-height: 1.5; color: #7a5012;
+    margin: 16px 2px 0;
+    padding: 12px 14px;
+    background: #fff3e0;
+    border: 1px solid #f0c887;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #7a5012;
   }
   .warn b { color: #5a3a08; }
-  .credit { margin: 6px 0 0; font-size: 11px; color: #b3ab98; line-height: 1.5; }
+
+  .hint {
+    max-width: 760px;
+    margin-top: 26px;
+    font-size: 12.5px;
+    color: #8a8474;
+    line-height: 1.6;
+  }
+  .hint b { color: #6a6454; }
+  .hint a { color: var(--ink); }
 </style>
 </head>
 <body>
 
-<div class="app">
+  <h1>✒️ Русский курсив</h1>
+  <p class="sub">Type Russian → see it in handwriting (cursive). 러시아어를 입력하면 필기체로 보여줍니다.</p>
 
-  <header class="bar">
-    <h1>✒️ Русский курсив</h1>
-    <button class="gear" id="gear" type="button" aria-label="설정">⚙</button>
-  </header>
+  <div class="panel">
 
-  <main class="io">
-    <textarea id="input" inputmode="none" placeholder="Напишите слово… (화면 자판으로 입력)"></textarea>
-    <div class="sheet"><p id="output" class="output"></p></div>
-  </main>
+    <!-- 1) 입력창 -->
+    <textarea id="input" inputmode="none" placeholder="Напишите слово или фразу…  (예: Привет, как дела?)"></textarea>
 
-  <section class="keyboard" id="keyboard"></section>
+    <!-- 2) cursive 출력 -->
+    <div class="sheet">
+      <p id="output" class="output"></p>
+    </div>
 
-  <div class="actions">
-    <button class="btn-primary" id="speak" type="button">🔊 Прослушать</button>
-    <button class="btn-soft" id="clear" type="button">✕ Очистить</button>
+    <!-- 3) 가상 자판 -->
+    <div class="kb-toggle">
+      <button id="kbToggle" class="ghost" type="button">⌨️ 화면 키릴 자판 켜기 / 끄기</button>
+    </div>
+    <div id="keyboard" class="keyboard"></div>
+
+    <!-- 4) 설정 -->
+    <div class="controls">
+      <label>
+        Шрифт / Font
+        <select id="font">
+          <option value="'Propisi', cursive">Propisi ★ 정통 러시아 학교 필기체</option>
+          <option value="'Pacifico', cursive">Pacifico (연결 붓글씨)</option>
+          <option value="'Lobster', cursive">Lobster (연결 굵은 필기체)</option>
+          <option value="'Marck Script', cursive">Marck Script (가는 필기체)</option>
+        </select>
+      </label>
+
+      <label>
+        Размер / Size: <span id="sizeVal">44</span>px
+        <input id="size" type="range" min="24" max="90" value="44">
+      </label>
+
+      <label>
+        Голос / Voice
+        <select id="voice"></select>
+      </label>
+
+      <label>
+        Скорость / Speed: <span id="rateVal">1.0</span>×
+        <input id="rate" type="range" min="0.5" max="1.5" step="0.1" value="1">
+      </label>
+
+      <label class="switch">
+        <input type="checkbox" id="ownkb">
+        📱 내 폰 키보드로 입력
+      </label>
+
+      <div class="row">
+        <button id="speak" type="button">🔊 Прослушать</button>
+        <button id="copy" class="ghost" type="button">Скопировать текст</button>
+        <button id="clear" class="ghost" type="button">Очистить</button>
+      </div>
+    </div>
+
+    <div id="voiceWarn" class="warn" hidden></div>
   </div>
-</div>
 
-<!-- Settings sheet -->
-<div class="backdrop" id="backdrop"></div>
-<aside class="settings" id="settings">
-  <div class="grab"></div>
-  <h2>⚙ 설정 / Настройки</h2>
-
-  <div id="voiceWarn" class="warn" hidden></div>
-
-  <label class="field switch">
-    <span>📱 내 폰 키보드로 입력<br><small style="color:#999">화면 자판 대신 기기 키보드 사용</small></span>
-    <input type="checkbox" id="ownkb">
-  </label>
-
-  <label class="field">
-    Шрифт / 글씨체
-    <select id="font">
-      <option value="'Propisi', cursive">Propisi ★ 정통 학교 필기체</option>
-      <option value="'Pacifico', cursive">Pacifico (연결 붓글씨)</option>
-      <option value="'Lobster', cursive">Lobster (굵은 필기체)</option>
-      <option value="'Marck Script', cursive">Marck Script (가는 필기체)</option>
-    </select>
-  </label>
-
-  <label class="field">
-    Размер / 크기: <span id="sizeVal">40</span>px
-    <input id="size" type="range" min="24" max="90" value="40">
-  </label>
-
-  <label class="field">
-    Голос / 음성
-    <select id="voice"></select>
-  </label>
-
-  <label class="field">
-    Скорость / 속도: <span id="rateVal">1.0</span>×
-    <input id="rate" type="range" min="0.5" max="1.5" step="0.1" value="1">
-  </label>
-
-  <div class="set-row">
-    <button id="copy" type="button">📋 텍스트 복사</button>
+  <div class="hint">
+    <b>Tip:</b> 진짜 손글씨처럼 보이려면 설정에서 글씨체를 바꿔보세요. 러시아 학교 필기체는
+    <i>т, д, и, ш</i> 같은 글자 모양이 인쇄체와 다릅니다.<br>
+    저장하려면 브라우저에서 <b>⌘P / 인쇄 → PDF로 저장</b> 하세요.<br>
+    feedback : <a href="mailto:mongsil88@snu.ac.kr">mongsil88@snu.ac.kr</a>
   </div>
-
-  <p class="credit">필기체 폰트: ParaType «Propisi» (CDN). 발음: 기기 내장 음성합성.</p>
-  <p class="credit">feedback : <a href="mailto:mongsil88@snu.ac.kr">mongsil88@snu.ac.kr</a></p>
-</aside>
 
 <script>
-  const input   = document.getElementById('input');
-  const output  = document.getElementById('output');
-  const font     = document.getElementById('font');
-  const size     = document.getElementById('size');
-  const sizeVal  = document.getElementById('sizeVal');
+  const input  = document.getElementById('input');
+  const output = document.getElementById('output');
+  const font   = document.getElementById('font');
+  const size   = document.getElementById('size');
+  const sizeVal= document.getElementById('sizeVal');
 
   function render() {
     output.textContent = input.value;
@@ -287,6 +276,7 @@
     output.style.fontSize = size.value + 'px';
     sizeVal.textContent = size.value;
   }
+
   input.addEventListener('input', render);
   font.addEventListener('change', render);
   size.addEventListener('input', render);
@@ -300,27 +290,13 @@
     try {
       await navigator.clipboard.writeText(input.value);
       const b = document.getElementById('copy');
-      const t = b.textContent; b.textContent = '복사됨 ✓';
+      const t = b.textContent;
+      b.textContent = 'Скопировано ✓';
       setTimeout(() => b.textContent = t, 1200);
-    } catch (e) { alert('복사 실패'); }
+    } catch (e) { alert('Копирование не удалось'); }
   });
 
   render();
-
-  /* ---------- Block the device keyboard on touch screens ---------- */
-  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-  function setOwnKeyboard(on) {
-    // on = use the phone's own keyboard; off = use the on-screen Cyrillic keyboard
-    if (on) {
-      input.readOnly = false;
-      input.setAttribute('inputmode', 'text');
-      keyboard.style.display = 'none';
-    } else {
-      input.readOnly = isTouch;          // readonly on touch => no native keyboard
-      input.setAttribute('inputmode', 'none');
-      keyboard.style.display = '';
-    }
-  }
 
   /* ---------- Text-to-speech (Russian) ---------- */
   const rate = document.getElementById('rate');
@@ -339,7 +315,8 @@
     if (russianVoices.length) {
       russianVoices.forEach((v, i) => {
         const o = document.createElement('option');
-        o.value = i; o.textContent = v.name + ' (' + v.lang + ')';
+        o.value = i;
+        o.textContent = v.name + ' (' + v.lang + ')';
         voiceSel.appendChild(o);
       });
       voiceWarn.hidden = true;
@@ -350,7 +327,7 @@
       voiceWarn.innerHTML =
         '⚠️ <b>러시아어 음성이 설치돼 있지 않아 글자를 하나씩 읽어요.</b><br>' +
         '<b>iPhone</b>: 설정 → 손쉬운 사용 → 콘텐츠 말하기 → 음성 → 러시아어 추가.<br>' +
-        '<b>Mac</b>: 시스템 설정 → 손쉬운 사용 → 음성 콘텐츠 → 시스템 음성 → 음성 관리 → Russian(Milena).<br>' +
+        '<b>Mac</b>: 시스템 설정 → 손쉬운 사용 → 음성 콘텐츠 → 시스템 음성 → 음성 관리 → Russian(Milena). ' +
         '추가 후 새로고침하세요.';
       voiceWarn.hidden = false;
     }
@@ -363,10 +340,11 @@
     if (!text) return;
     if (speechSynthesis.speaking) { speechSynthesis.cancel(); return; }
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ru-RU'; u.rate = +rate.value;
+    u.lang = 'ru-RU';
+    u.rate = +rate.value;
     const v = russianVoices[+voiceSel.value];
     if (v) u.voice = v;
-    u.onstart = () => speakBtn.textContent = '⏹ Стоп';
+    u.onstart = () => speakBtn.textContent = '⏹ Остановить';
     u.onend = u.onerror = () => speakBtn.textContent = '🔊 Прослушать';
     speechSynthesis.speak(u);
   });
@@ -410,7 +388,7 @@
     const b = document.createElement('div');
     b.className = 'key' + (cls ? ' ' + cls : '');
     b.textContent = label;
-    // use pointerdown + preventDefault so the readonly textarea never tries to focus
+    // prevent the (readonly) textarea from grabbing focus / opening device kbd
     b.addEventListener('pointerdown', (ev) => ev.preventDefault());
     return b;
   }
@@ -432,7 +410,7 @@
 
   const bottom = document.createElement('div');
   bottom.className = 'kb-row';
-  const shiftKey = makeKey('⇧', 'fn shift');
+  const shiftKey = makeKey('⇧', 'wide shift');
   shiftKey.addEventListener('click', () => setShift(!shiftOn));
   bottom.appendChild(shiftKey);
   ['.', ',', '?', '!'].forEach(p => {
@@ -443,27 +421,32 @@
   const space = makeKey('пробел', 'space');
   space.addEventListener('click', () => insertText(' '));
   bottom.appendChild(space);
-  const back = makeKey('⌫', 'fn');
+  const back = makeKey('⌫', 'wide');
   back.addEventListener('click', backspace);
   bottom.appendChild(back);
   keyboard.appendChild(bottom);
 
-  /* ---------- Settings sheet open/close ---------- */
-  const settings = document.getElementById('settings');
-  const backdrop = document.getElementById('backdrop');
-  function openSettings(o) {
-    settings.classList.toggle('open', o);
-    backdrop.classList.toggle('show', o);
-  }
-  document.getElementById('gear').addEventListener('click', () => openSettings(true));
-  backdrop.addEventListener('click', () => openSettings(false));
-
-  document.getElementById('ownkb').addEventListener('change', (e) => {
-    setOwnKeyboard(e.target.checked);
-    if (e.target.checked) { input.focus(); }
+  document.getElementById('kbToggle').addEventListener('click', () => {
+    keyboard.hidden = !keyboard.hidden;
   });
 
-  // default: on-screen keyboard mode
+  /* ---------- Keep the device keyboard from covering the screen ---------- */
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  function setOwnKeyboard(on) {
+    if (on) {                       // use the phone's own keyboard
+      input.readOnly = false;
+      input.setAttribute('inputmode', 'text');
+      keyboard.hidden = true;
+    } else {                        // use the on-screen Cyrillic keyboard
+      input.readOnly = isTouch;     // readonly on touch => no native keyboard pops up
+      input.setAttribute('inputmode', 'none');
+      keyboard.hidden = false;
+    }
+  }
+  document.getElementById('ownkb').addEventListener('change', (e) => {
+    setOwnKeyboard(e.target.checked);
+    if (e.target.checked) input.focus();
+  });
   setOwnKeyboard(false);
 
   /* ---------- PWA service worker ---------- */
