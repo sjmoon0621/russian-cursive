@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Русский курсив — Russian Cursive</title>
+
+<!-- PWA: installable / offline -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1a3a6b">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Курсив">
+
+<!-- Cyrillic handwriting fonts from Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Lobster&family=Marck+Script&display=swap" rel="stylesheet">
+
+<style>
+  /* Authentic Russian school cursive (ParaType Propisi, 1997).
+     Loads the local file first, falls back to jsDelivr CDN if opened where
+     the local file can't be read. */
+  @font-face {
+    font-family: 'Propisi';
+    src: url('Propisi.ttf') format('truetype'),
+         url('https://cdn.jsdelivr.net/gh/zorinalexey/win-fonts@main/Propisi.TTF') format('truetype');
+    font-display: swap;
+  }
+
+  :root {
+    --bg: #f4f1ea;
+    --paper: #fffdf8;
+    --ink: #1a3a6b;        /* blue ink like a Russian notebook */
+    --line: #c9d6e8;
+    --accent: #b5651d;
+    --ui: #2b2b2b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "SF Pro Text", "Helvetica Neue", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--ui);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 16px 60px;
+  }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  .sub { margin: 0 0 22px; color: #777; font-size: 13px; }
+
+  .panel {
+    width: 100%;
+    max-width: 760px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 110px;
+    padding: 14px 16px;
+    font-size: 18px;
+    line-height: 1.5;
+    border: 1px solid #d8d2c4;
+    border-radius: 12px;
+    resize: vertical;
+    background: #fff;
+    color: #222;
+    outline: none;
+  }
+  textarea:focus { border-color: var(--ink); }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 22px;
+    align-items: center;
+    margin: 16px 2px 20px;
+    font-size: 13px;
+  }
+  .controls label { display: flex; flex-direction: column; gap: 5px; color: #555; }
+  select, input[type=range] { accent-color: var(--ink); }
+  select {
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: #fff;
+    font-size: 13px;
+  }
+  .row { display: flex; align-items: center; gap: 8px; }
+  button {
+    padding: 7px 14px;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  button.ghost { background: #fff; color: var(--ink); }
+
+  /* The cursive output sheet — looks like ruled notebook paper */
+  .sheet {
+    position: relative;
+    background: var(--paper);
+    border-radius: 12px;
+    padding: 36px 34px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    min-height: 180px;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(1.7em - 1px),
+      var(--line) calc(1.7em - 1px),
+      var(--line) 1.7em
+    );
+    background-size: 100% 1.7em;
+    overflow-wrap: break-word;
+  }
+  .output {
+    font-family: 'Propisi', cursive;
+    color: var(--ink);
+    font-size: 44px;
+    line-height: 1.7em;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+  }
+  .output:empty::before {
+    content: "Здесь появится курсив…";
+    color: #b9b2a0;
+  }
+
+  /* Warning banner when no Russian voice is installed */
+  .warn {
+    margin: 16px 0 4px;
+    padding: 12px 14px;
+    background: #fff3e0;
+    border: 1px solid #f0c887;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #7a5012;
+  }
+  .warn b { color: #5a3a08; }
+
+  /* On-screen Cyrillic keyboard */
+  .kb-toggle { margin: 22px 0 0; }
+  .keyboard {
+    margin-top: 12px;
+    background: #e7e1d4;
+    padding: 12px 10px;
+    border-radius: 14px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,.08);
+    user-select: none;
+  }
+  .kb-row { display: flex; justify-content: center; gap: 6px; margin-bottom: 6px; }
+  .kb-row:last-child { margin-bottom: 0; }
+  .key {
+    min-width: 38px;
+    height: 44px;
+    padding: 0 6px;
+    display: flex; align-items: center; justify-content: center;
+    background: #fff;
+    border: 1px solid #cfc8b8;
+    border-bottom-width: 2px;
+    border-radius: 8px;
+    font-size: 18px;
+    color: #2b2b2b;
+    cursor: pointer;
+    transition: background .05s, transform .05s;
+  }
+  .key:hover { background: #f3efe6; }
+  .key:active { transform: translateY(1px); background: #e6dfce; }
+  .key.wide { min-width: 78px; font-size: 13px; color: #555; }
+  .key.space { flex: 1; max-width: 320px; }
+  .key.shift.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .hint {
+    max-width: 760px;
+    margin-top: 26px;
+    font-size: 12.5px;
+    color: #8a8474;
+    line-height: 1.6;
+  }
+  .hint b { color: #6a6454; }
+</style>
+</head>
+<body>
+
+  <h1>✒️ Русский курсив</h1>
+  <p class="sub">Type Russian → see it in handwriting (cursive). 러시아어를 입력하면 필기체로 보여줍니다.</p>
+
+  <div class="panel">
+    <textarea id="input" placeholder="Напишите слово или фразу…  (예: Привет, как дела?)" autofocus></textarea>
+
+    <div class="controls">
+      <label>
+        Шрифт / Font
+        <select id="font">
+          <option value="'Propisi', cursive">Propisi ★ 정통 러시아 학교 필기체</option>
+          <option value="'Pacifico', cursive">Pacifico (연결 붓글씨)</option>
+          <option value="'Lobster', cursive">Lobster (연결 굵은 필기체)</option>
+          <option value="'Marck Script', cursive">Marck Script (가는 필기체)</option>
+        </select>
+      </label>
+
+      <label>
+        Размер / Size: <span id="sizeVal">44</span>px
+        <input id="size" type="range" min="24" max="90" value="44">
+      </label>
+
+      <label>
+        Голос / Voice
+        <select id="voice"></select>
+      </label>
+
+      <label>
+        Скорость / Speed: <span id="rateVal">1.0</span>×
+        <input id="rate" type="range" min="0.5" max="1.5" step="0.1" value="1">
+      </label>
+
+      <div class="row">
+        <button id="speak" type="button">🔊 Прослушать</button>
+        <button id="copy" class="ghost" type="button">Скопировать текст</button>
+        <button id="clear" class="ghost" type="button">Очистить</button>
+      </div>
+    </div>
+
+    <div id="voiceWarn" class="warn" hidden></div>
+
+    <div class="sheet">
+      <p id="output" class="output"></p>
+    </div>
+
+    <div class="kb-toggle">
+      <button id="kbToggle" class="ghost" type="button">⌨️ 화면 키릴 자판 켜기 / 끄기</button>
+    </div>
+    <div id="keyboard" class="keyboard" hidden></div>
+  </div>
+
+  <div class="hint">
+    <b>Tip:</b> 진짜 손글씨처럼 보이려면 위의 폰트를 바꿔보세요. 러시아 학교 필기체는
+    <i>т, д, и, ш</i> 같은 글자 모양이 인쇄체와 다릅니다 — 이 폰트들이 그 모양을 재현합니다.<br>
+    저장하려면 브라우저에서 <b>⌘P → PDF로 저장</b> 하세요.
+  </div>
+
+<script>
+  const input  = document.getElementById('input');
+  const output = document.getElementById('output');
+  const font   = document.getElementById('font');
+  const size   = document.getElementById('size');
+  const sizeVal= document.getElementById('sizeVal');
+
+  function render() {
+    output.textContent = input.value;
+    output.style.fontFamily = font.value;
+    output.style.fontSize = size.value + 'px';
+    sizeVal.textContent = size.value;
+  }
+
+  input.addEventListener('input', render);
+  font.addEventListener('change', render);
+  size.addEventListener('input', render);
+
+  document.getElementById('clear').addEventListener('click', () => {
+    input.value = '';
+    input.focus();
+    render();
+  });
+
+  document.getElementById('copy').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(input.value);
+      const b = document.getElementById('copy');
+      const t = b.textContent;
+      b.textContent = 'Скопировано ✓';
+      setTimeout(() => b.textContent = t, 1200);
+    } catch (e) { alert('Копирование не удалось'); }
+  });
+
+  render();
+
+  /* ---------- Text-to-speech (Russian) ---------- */
+  const rate = document.getElementById('rate');
+  const rateVal = document.getElementById('rateVal');
+  const speakBtn = document.getElementById('speak');
+  const voiceSel = document.getElementById('voice');
+  const voiceWarn = document.getElementById('voiceWarn');
+
+  rate.addEventListener('input', () => rateVal.textContent = (+rate.value).toFixed(1));
+
+  let russianVoices = [];
+
+  function populateVoices() {
+    const all = speechSynthesis.getVoices();
+    russianVoices = all.filter(v => v.lang && v.lang.toLowerCase().startsWith('ru'));
+
+    voiceSel.innerHTML = '';
+    if (russianVoices.length) {
+      russianVoices.forEach((v, i) => {
+        const o = document.createElement('option');
+        o.value = i;
+        o.textContent = v.name + ' (' + v.lang + ')';
+        voiceSel.appendChild(o);
+      });
+      voiceWarn.hidden = true;
+      speakBtn.disabled = false;
+    } else {
+      const o = document.createElement('option');
+      o.textContent = '러시아어 음성 없음';
+      voiceSel.appendChild(o);
+      // Show install instructions — without a Russian voice the browser
+      // spells out each Cyrillic letter instead of pronouncing words.
+      voiceWarn.innerHTML =
+        '⚠️ <b>맥에 러시아어 음성이 설치돼 있지 않아 글자를 하나씩 읽고 있어요.</b><br>' +
+        '설치: <b>시스템 설정 → 손쉬운 사용 → 음성 콘텐츠 → 시스템 음성 → 음성 관리…</b> ' +
+        '에서 <b>Russian (Milena 또는 Yuri)</b> 를 체크해 다운로드하세요. ' +
+        '그 뒤 이 페이지를 새로고침하면 발음으로 읽어줍니다.';
+      voiceWarn.hidden = false;
+    }
+  }
+
+  populateVoices();
+  speechSynthesis.onvoiceschanged = populateVoices;
+
+  speakBtn.addEventListener('click', () => {
+    const text = input.value.trim();
+    if (!text) return;
+    if (speechSynthesis.speaking) { speechSynthesis.cancel(); return; }  // toggle off
+
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ru-RU';
+    u.rate = +rate.value;
+    const v = russianVoices[+voiceSel.value];
+    if (v) u.voice = v;          // only a real ru voice pronounces words
+    u.onstart = () => speakBtn.textContent = '⏹ Остановить';
+    u.onend = u.onerror = () => speakBtn.textContent = '🔊 Прослушать';
+    speechSynthesis.speak(u);
+  });
+
+  /* ---------- On-screen Cyrillic keyboard (ЙЦУКЕН) ---------- */
+  const keyboard = document.getElementById('keyboard');
+  const letterRows = [
+    ['й','ц','у','к','е','н','г','ш','щ','з','х','ъ'],
+    ['ф','ы','в','а','п','р','о','л','д','ж','э'],
+    ['я','ч','с','м','и','т','ь','б','ю','ё'],
+  ];
+  const letterKeys = [];   // {el, char}
+  let shiftOn = false;
+
+  function insertText(text) {
+    const s = input.selectionStart, e = input.selectionEnd;
+    input.value = input.value.slice(0, s) + text + input.value.slice(e);
+    input.selectionStart = input.selectionEnd = s + text.length;
+    input.focus();
+    render();
+  }
+  function backspace() {
+    const s = input.selectionStart, e = input.selectionEnd;
+    if (s === e && s > 0) {
+      input.value = input.value.slice(0, s - 1) + input.value.slice(e);
+      input.selectionStart = input.selectionEnd = s - 1;
+    } else {
+      input.value = input.value.slice(0, s) + input.value.slice(e);
+      input.selectionStart = input.selectionEnd = s;
+    }
+    input.focus();
+    render();
+  }
+  function setShift(on) {
+    shiftOn = on;
+    letterKeys.forEach(k => k.el.textContent = on ? k.char.toUpperCase() : k.char);
+    document.querySelectorAll('.key.shift').forEach(b => b.classList.toggle('on', on));
+  }
+
+  function makeKey(label, cls) {
+    const b = document.createElement('div');
+    b.className = 'key' + (cls ? ' ' + cls : '');
+    b.textContent = label;
+    return b;
+  }
+
+  letterRows.forEach(row => {
+    const r = document.createElement('div');
+    r.className = 'kb-row';
+    row.forEach(ch => {
+      const el = makeKey(ch);
+      letterKeys.push({ el, char: ch });
+      el.addEventListener('click', () => {
+        insertText(shiftOn ? ch.toUpperCase() : ch);
+        if (shiftOn) setShift(false);   // shift releases after one letter
+      });
+      r.appendChild(el);
+    });
+    keyboard.appendChild(r);
+  });
+
+  // bottom row: Shift, punctuation, Space, Backspace
+  const bottom = document.createElement('div');
+  bottom.className = 'kb-row';
+
+  const shiftKey = makeKey('⇧ Shift', 'wide shift');
+  shiftKey.addEventListener('click', () => setShift(!shiftOn));
+  bottom.appendChild(shiftKey);
+
+  [',', '.', '?', '!', '-'].forEach(p => {
+    const el = makeKey(p);
+    el.addEventListener('click', () => insertText(p));
+    bottom.appendChild(el);
+  });
+
+  const space = makeKey('пробел', 'space');
+  space.addEventListener('click', () => insertText(' '));
+  bottom.appendChild(space);
+
+  const back = makeKey('⌫', 'wide');
+  back.addEventListener('click', backspace);
+  bottom.appendChild(back);
+
+  keyboard.appendChild(bottom);
+
+  document.getElementById('kbToggle').addEventListener('click', () => {
+    keyboard.hidden = !keyboard.hidden;
+    if (!keyboard.hidden) input.focus();
+  });
+
+  /* ---------- PWA service worker (offline + installable) ---------- */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>

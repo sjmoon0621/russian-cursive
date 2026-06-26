@@ -1,0 +1,7 @@
+# Claude internal config — not for publishing
+.claude/
+
+# Proprietary ParaType font — served via CDN instead of redistributing
+Propisi.ttf
+
+.DS_Store
