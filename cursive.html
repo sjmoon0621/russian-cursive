@@ -217,7 +217,7 @@
     <!-- 4) 설정 -->
     <div class="controls">
       <label>
-        Шрифт / Font
+        Font
         <select id="font">
           <option value="'Propisi', cursive">Propisi ★ 정통 러시아 학교 필기체</option>
           <option value="'Pacifico', cursive">Pacifico (연결 붓글씨)</option>
@@ -227,17 +227,17 @@
       </label>
 
       <label>
-        Размер / Size: <span id="sizeVal">44</span>px
+        Size: <span id="sizeVal">44</span>px
         <input id="size" type="range" min="24" max="90" value="44">
       </label>
 
       <label>
-        Голос / Voice
+        Voice
         <select id="voice"></select>
       </label>
 
       <label>
-        Скорость / Speed: <span id="rateVal">1.0</span>×
+        Speed: <span id="rateVal">1.0</span>×
         <input id="rate" type="range" min="0.5" max="1.5" step="0.1" value="1">
       </label>
 
@@ -247,9 +247,9 @@
       </label>
 
       <div class="row">
-        <button id="speak" type="button">🔊 Прослушать</button>
-        <button id="copy" class="ghost" type="button">Скопировать текст</button>
-        <button id="clear" class="ghost" type="button">Очистить</button>
+        <button id="speak" type="button">🔊 발음 듣기</button>
+        <button id="copy" class="ghost" type="button">복사</button>
+        <button id="clear" class="ghost" type="button">삭제</button>
       </div>
     </div>
 
@@ -291,7 +291,7 @@
       await navigator.clipboard.writeText(input.value);
       const b = document.getElementById('copy');
       const t = b.textContent;
-      b.textContent = 'Скопировано ✓';
+      b.textContent = '복사됨 ✓';
       setTimeout(() => b.textContent = t, 1200);
     } catch (e) { alert('Копирование не удалось'); }
   });
@@ -344,8 +344,8 @@
     u.rate = +rate.value;
     const v = russianVoices[+voiceSel.value];
     if (v) u.voice = v;
-    u.onstart = () => speakBtn.textContent = '⏹ Остановить';
-    u.onend = u.onerror = () => speakBtn.textContent = '🔊 Прослушать';
+    u.onstart = () => speakBtn.textContent = '⏹ 멈춤';
+    u.onend = u.onerror = () => speakBtn.textContent = '🔊 발음 듣기';
     speechSynthesis.speak(u);
   });
 
