@@ -104,6 +104,25 @@
     content: "Здесь появится курсив…";
     color: #b9b2a0;
   }
+  /* Stress mark drawn over a vowel via CSS (no combining char in the text run,
+     so the cursive letters stay connected). */
+  .output .acc { position: relative; }
+  .output .acc::after {
+    content: "\00B4";                 /* acute accent ´ */
+    position: absolute;
+    left: 50%;
+    top: 0.14em;                      /* lowercase: sits just above x-height */
+    transform: translateX(-50%);
+    font-family: -apple-system, "Helvetica Neue", sans-serif;
+    font-size: 0.5em;
+    line-height: 1;
+    color: var(--ink);
+    pointer-events: none;
+  }
+  .output .acc.up::after {            /* uppercase: taller + slanted */
+    top: -0.30em;
+    transform: translateX(-20%);
+  }
 
   /* On-screen Cyrillic keyboard */
   .kb-toggle { margin: 22px 0 0; }
@@ -270,8 +289,24 @@
   const size   = document.getElementById('size');
   const sizeVal= document.getElementById('sizeVal');
 
+  const ACUTE = '́';   // combining acute accent (stress)
+  function esc(c) {
+    return c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : c;
+  }
   function render() {
-    output.textContent = input.value;
+    const v = input.value;
+    let html = '';
+    for (let i = 0; i < v.length; i++) {
+      const ch = v[i];
+      if (ch === ACUTE) continue;            // drawn via CSS on the base letter
+      if (v[i + 1] === ACUTE) {
+        const up = ch !== ch.toLowerCase();   // uppercase vowel?
+        html += '<span class="acc' + (up ? ' up' : '') + '">' + esc(ch) + '</span>';
+      } else {
+        html += esc(ch);
+      }
+    }
+    output.innerHTML = html;
     output.style.fontFamily = font.value;
     output.style.fontSize = size.value + 'px';
     sizeVal.textContent = size.value;
@@ -418,6 +453,11 @@
     el.addEventListener('click', () => insertText(p));
     bottom.appendChild(el);
   });
+  // stress mark: combining acute accent (U+0301) — sits on the previous vowel
+  const stress = makeKey('◌́', 'wide');
+  stress.title = '강세 (바로 앞 모음 위에)';
+  stress.addEventListener('click', () => insertText('́'));
+  bottom.appendChild(stress);
   const space = makeKey('пробел', 'space');
   space.addEventListener('click', () => insertText(' '));
   bottom.appendChild(space);
